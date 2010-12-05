@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use 5.12.2;
-our $|++;    # autoflush
-use Time::HiRes;
+our $|++;                      # autoflush
+use Time::HiRes qw(usleep);    # import microsleep
 
 # Task worker
 # Connects PULL socket to tcp://localhost:5557
@@ -23,7 +23,7 @@ while (1) {
     print 'w';    # simple progress indicator
 
     # do the work
-    sleep( $s->data * 0.001 );
+    usleep( $s->data );
 
     # send the results to the sink
     $sender->send('');
