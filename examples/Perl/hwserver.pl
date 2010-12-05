@@ -5,7 +5,7 @@ use 5.12.2;    # not neccessary but enables strict and modern features
 #   Binds REP socket to tcp://*:5555
 #   Expects "Hello" from client, replies with "World"
 
-use ZeroMQ qw/:all/;
+use ZeroMQ qw/:all/;    # import everything
 
 my $ctx    = ZeroMQ::Context->new;
 my $socket = $ctx->socket(ZMQ_REP);

@@ -5,7 +5,7 @@ use 5.12.2;    # not neccessary but enables strict and modern features
 #   Connects REQ socket to tcp://localhost:5555
 #   Sends "Hello" to server, expects "World" back
 
-use ZeroMQ qw/:all/;
+use ZeroMQ qw/:all/;    # import everything
 
 my $ctx    = ZeroMQ::Context->new;
 my $socket = $ctx->socket(ZMQ_REQ);
