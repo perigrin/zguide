@@ -1,13 +1,30 @@
-No-one has translated the taskwork example into Perl yet.  Be the first to create
-taskwork in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/env perl
+use 5.12.2;
+our $|++;    # autoflush
+use Time::HiRes;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+# Task worker
+# Connects PULL socket to tcp://localhost:5557
+# Collects workloads from ventilator via that socket
+# Connects PUSH socket to tcp://localhost:5558
+# Sends results to sink via that socket
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+use ZeroMQ qw/:all/;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+my $ctx      = ZeroMQ::Context->new;
+my $receiver = $ctx->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
+
+my $sender = $ctx->socket(ZMQ_PUSH);
+$sender->connect('tcp://localhost:5558');
+
+while (1) {
+    my $s = $receiver->recv();
+    print 'w';    # simple progress indicator
+
+    # do the work
+    sleep( $s->data * 0.001 );
+
+    # send the results to the sink
+    $sender->send('');
+}

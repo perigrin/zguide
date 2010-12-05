@@ -1,13 +1,27 @@
-No-one has translated the tasksink example into Perl yet.  Be the first to create
-tasksink in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/env perl
+use 5.12.2;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+# Task sink (Based on Python Version)
+# Binds PULL socket to tcp://localhost:5558
+# Collects results from workers via that socket
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+use ZeroMQ qw/:all/;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+my $ctx = ZeroMQ::Context->new;
+
+my $receiver = $ctx->socket(ZMQ_PULL);
+$receiver->bind('tcp://*:5558');
+
+my $s = $receiver->recv();
+
+my $tstart = time();
+
+my $total_msec = 0;
+for my $task ( 1 .. 100 ) {
+    my $s = $receiver->recv;
+    print $task % 10 == 0 ? ':' : '.';
+}
+
+my $tend = time();
+
+say sprintf "Total elapsed time: %d", ( ( $tend - $tstart ) * 1000 );

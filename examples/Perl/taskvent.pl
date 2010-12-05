@@ -1,13 +1,32 @@
-No-one has translated the taskvent example into Perl yet.  Be the first to create
-taskvent in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/env perl
+use 5.12.2;
+use Time::HiRes;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+# Task ventilator (based on Python version)
+# Binds PUSH socket to tcp://localhost:5557
+# Sends batch of tasks to workers via that socket
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+use ZeroMQ qw/:all/;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+my $ctx    = ZeroMQ::Context->new;
+my $sender = $ctx->socket(ZMQ_PUSH);
+
+$sender->bind('tcp://*:5557');
+
+say "Press enter when the workers are ready: ";
+until (<>) { }
+
+say "Sending tasks to workers...";
+
+$sender->send('0');
+
+my $total_msec = 0;
+
+for my $task ( 1 .. 100 ) {
+    my $workload = int( rand(100) + 1 );
+    $total_msec += $workload;
+    $sender->send($workload);
+}
+
+say "Total expected cost: $total_msec msec";
+sleep(1);
