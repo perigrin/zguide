@@ -1,13 +1,33 @@
-No-one has translated the msreader example into Perl yet.  Be the first to create
-msreader in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/env perl
+use 5.12.2;
+use Time::HiRes qw(usleep);
+use ZeroMQ qw/:all/;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+my $ctx = ZeroMQ::Context->new;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+# connect to the ventilator
+my $receiver = $ctx->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# connect to the weather server
+my $subscriber = $ctx->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5556');
+$subscriber->setsockopt( ZMQ_SUBSCRIBE, '10001 ', 6 );
+
+# process messages from boths ockets
+# we prioritize traffic from the task ventilator
+
+while (1) {
+
+    #  Process any waiting tasks
+    until ( my $rc ) {
+        if ( $rc = $receiver->recv(ZMQ_NOBLOCK) ) { }    # do something
+    }
+
+    # Process any waiting weather updates
+    until ( my $rc ) {
+        if ( $rc = $subscriber->recv(ZMQ_NOBLOCK) ) { }    # do something
+    }
+
+    usleep(1);
+}

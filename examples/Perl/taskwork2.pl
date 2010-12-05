@@ -1,13 +1,43 @@
-No-one has translated the taskwork2 example into Perl yet.  Be the first to create
-taskwork2 in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/env perl 
+use 5.12.2;
+our $|++;                      # autoflush
+use Time::HiRes qw(usleep);    # import microsleep
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+#  Task worker - design 2
+#  Adds pub-sub flow to receive and respond to kill signal
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+use ZeroMQ qw/0.02_02 :all/;    # use the development version of ZeroMQ
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+my $ctx = ZeroMQ::Context->new;
+
+my $receiver = $ctx->socket(ZMQ_PULL);
+$receiver->conect('tcp://localhost:5557');
+
+my $sender = $ctx->socket(ZMQ_PUSH);
+$sender->connect('tcp://localhost:5558');
+
+my $controller = $ctx->socket(ZMQ_SUB);
+$controller->connect('tcp://localhost:5559');
+$controller->setsockopt( ZMQ_SUBSCRIBE, '', 0 );
+
+my $pi = ZMQ::PollItem->new;
+
+$pi->add(
+    $receiver,
+    ZMQ_POLLIN,
+    sub {
+
+        # process task
+        my $message  = $receiver->recv();
+        my $workload = $message->data;      # workload in msecs
+        usleep($workload);                  # do the work
+        $sender->send('0');                 # Send results to sink
+        print '.';                          # simple status indicator
+
+    }
+);
+
+# Any waiting controller command acts as 'KILL'
+$pi->add( $controller, ZMQ_POLLIN, sub { exit; } );
+
+$pi->poll(0);
